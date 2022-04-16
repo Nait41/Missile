@@ -13,10 +13,14 @@ module.exports = {
             'localhost:9000'
         ],
         stats: 'errors-only',
-        clientLogLevel: 'error'
+        clientLogLevel: 'error',
     },
     module: {
         rules: [
+            {
+                test: /\.vue$/,
+                loader: 'vue-loader'
+            },
             {
                 test: /\.js$/,
                 exclude: /(node_modules|bower_components)/,
@@ -28,9 +32,21 @@ module.exports = {
                 }
             },
             {
-                test: /\.vue$/,
-                loader: 'vue-loader'
-            }
+                test: /\.css$/,
+                use: [
+                    'vue-style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            // css-loader set esModule: true as the default in v4.0.0
+                            // https://github.com/webpack-contrib/css-loader/releases/tag/v4.0.0
+                            // Doesn't work unless this disabled
+                            esModule: false
+                        }
+                    },
+                ]
+            },
+
         ]
     },
     plugins: [
@@ -40,6 +56,6 @@ module.exports = {
         modules: [
             path.join(__dirname, 'src', 'main', 'resources', 'static', 'js'),
             path.join(__dirname, 'node_modules'),
-        ],
+        ]
     }
 }
