@@ -2,25 +2,29 @@ package Messenger.Missile.controller;
 
 import Messenger.Missile.domain.Message;
 import Messenger.Missile.domain.Views;
+import Messenger.Missile.dto.EventType;
+import Messenger.Missile.dto.ObjectType;
 import Messenger.Missile.repo.MessageRepo;
+import Messenger.Missile.util.WsSender;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 @RestController
 @RequestMapping("message")
 public class MessageController {
     private final MessageRepo messageRepo;
+    private final BiConsumer<EventType, Message> wsSender;
 
     @Autowired
-    public MessageController(MessageRepo messageRepo) {
+    public MessageController(MessageRepo messageRepo, WsSender wsSender) {
         this.messageRepo = messageRepo;
+        this.wsSender = wsSender.getSender(ObjectType.MESSAGE, Views.IdName.class);
     }
 
     @GetMapping
@@ -39,7 +43,9 @@ public class MessageController {
     @PostMapping
     public Message create(@RequestBody Message message){
         message.setCreationDate(LocalDateTime.now());
-        return messageRepo.save(message);
+        Message updateMessage = messageRepo.save(message);
+        wsSender.accept(EventType.CREATE, updateMessage);
+        return updateMessage;
     }
 
     @PutMapping("{id}")
@@ -48,17 +54,22 @@ public class MessageController {
             @RequestBody Message message)
     {
         BeanUtils.copyProperties(message, messageFromDb, "id");
-        return messageRepo.save(messageFromDb);
+        Message updateMessage = messageRepo.save(messageFromDb);
+        wsSender.accept(EventType.UPDATE, updateMessage);
+        return updateMessage;
     }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable("id") Message message){
         messageRepo.delete(message);
+        wsSender.accept(EventType.REMOVE, message);
     }
 
+    /*
     @MessageMapping("/changeMessage")
     @SendTo("/topic/activity")
     public Message change(Message message){
         return messageRepo.save(message);
     }
+    */
 }
