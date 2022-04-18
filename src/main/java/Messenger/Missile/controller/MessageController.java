@@ -3,21 +3,35 @@ package Messenger.Missile.controller;
 import Messenger.Missile.domain.Message;
 import Messenger.Missile.domain.Views;
 import Messenger.Missile.dto.EventType;
+import Messenger.Missile.dto.MetaDto;
 import Messenger.Missile.dto.ObjectType;
 import Messenger.Missile.repo.MessageRepo;
 import Messenger.Missile.util.WsSender;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("message")
 public class MessageController {
+    private static String URL_PATTERN = "https?:\\/\\/?[\\w\\d\\._\\-%\\/\\?=&#]+";
+    private static String IMAGE_PATTERN = "\\.(jpeg|jpg|gif|png)$";
+
+    private static Pattern URL_REGEX = Pattern.compile(URL_PATTERN, Pattern.CASE_INSENSITIVE);
+    private static Pattern IMAGE_REGEX = Pattern.compile(IMAGE_PATTERN, Pattern.CASE_INSENSITIVE);
+
     private final MessageRepo messageRepo;
     private final BiConsumer<EventType, Message> wsSender;
 
@@ -41,8 +55,9 @@ public class MessageController {
     }
 
     @PostMapping
-    public Message create(@RequestBody Message message){
+    public Message create(@RequestBody Message message) throws IOException {
         message.setCreationDate(LocalDateTime.now());
+        fillMeta(message);
         Message updateMessage = messageRepo.save(message);
         wsSender.accept(EventType.CREATE, updateMessage);
         return updateMessage;
@@ -51,9 +66,9 @@ public class MessageController {
     @PutMapping("{id}")
     public Message update(
             @PathVariable("id") Message messageFromDb,
-            @RequestBody Message message)
-    {
+            @RequestBody Message message) throws IOException {
         BeanUtils.copyProperties(message, messageFromDb, "id");
+        fillMeta(messageFromDb);
         Message updateMessage = messageRepo.save(messageFromDb);
         wsSender.accept(EventType.UPDATE, updateMessage);
         return updateMessage;
@@ -65,11 +80,40 @@ public class MessageController {
         wsSender.accept(EventType.REMOVE, message);
     }
 
-    /*
-    @MessageMapping("/changeMessage")
-    @SendTo("/topic/activity")
-    public Message change(Message message){
-        return messageRepo.save(message);
+    private void fillMeta(Message message) throws IOException {
+        String text = message.getText();
+        Matcher matcher = URL_REGEX.matcher(text);
+
+        if(matcher.find()){
+            String url = text.substring(matcher.start(), matcher.end());
+            matcher = IMAGE_REGEX.matcher(url);
+            message.setLink(url);
+            if(matcher.find()){
+                message.setLinkCover(url);
+            }else if (!url.contains("youtu")){
+                MetaDto meta = getMeta(url);
+
+                message.setLinkCover(meta.getCover());
+                message.setLinkTitle(meta.getTitle());
+                message.setLinkDescription(meta.getDescription());
+            }
+        }
     }
-    */
+
+    private MetaDto getMeta(String url) throws IOException {
+        Document doc = Jsoup.connect(url).get();
+        Elements title = doc.select("meta[name$=title], meta[property$=title]");
+        Elements description = doc.select("meta[name$=title], meta[property$=description]");
+        Elements cover = doc.select("meta[name$=title], meta[property$=image]");
+
+        return new MetaDto(
+                getContent(title.first()),
+                getContent(description.first()),
+                getContent(cover.first())
+        );
+    }
+
+    private String getContent(Element element){
+        return element == null? "" : element.attr("content");
+    }
 }
