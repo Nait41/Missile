@@ -24,11 +24,10 @@
 </template>
 
 <script>
-import YouTube from "./YouTube.vue";
-
+import YouTube from './YouTube.vue'
 export default {
-  name: "Media",
-  components: {YouTube},
+  name: 'Media',
+  components: { YouTube },
   props: ['message'],
   data() {
     return {
@@ -36,7 +35,7 @@ export default {
     }
   },
   beforeMount() {
-    if(this.message.link.indexOf('youtu') > -1){
+    if (this.message.link.indexOf('youtu') > -1) {
       this.type = 'youtube'
     } else if (this.message.link.match(/\.(jpeg|jpg|gif|png)$/) !== null) {
       this.type = 'image'
@@ -48,5 +47,4 @@ export default {
 </script>
 
 <style scoped>
-
 </style>

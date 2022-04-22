@@ -11,17 +11,16 @@
 
 <script>
 export default {
-  name: "YouTube",
+  name: 'YouTube',
   props: ['src'],
   computed: {
-    targetSrc(){
+    targetSrc() {
       let parts = this.src.split('/');
-      return `https://www.youtube.com/embed/${parts[parts.length - 1]}`
+      return 'https://www.youtube.com/embed/' + parts[parts.length - 1];
     }
   }
 }
 </script>
 
 <style scoped>
-
 </style>
