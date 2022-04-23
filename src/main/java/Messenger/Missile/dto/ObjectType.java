@@ -1,5 +1,5 @@
 package Messenger.Missile.dto;
 
 public enum ObjectType {
-    MESSAGE
+    MESSAGE, COMMENT
 }
