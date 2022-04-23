@@ -58,9 +58,9 @@ public class MessageController {
 
     @PostMapping
     public Message create(@RequestBody Message message, @AuthenticationPrincipal User user) throws IOException {
-        message.setAuthor(user);
         message.setCreationDate(LocalDateTime.now());
         fillMeta(message);
+        message.setAuthor(user);
         Message updateMessage = messageRepo.save(message);
         wsSender.accept(EventType.CREATE, updateMessage);
         return updateMessage;
@@ -70,9 +70,9 @@ public class MessageController {
     public Message update(
             @PathVariable("id") Message messageFromDb,
             @RequestBody Message message, @AuthenticationPrincipal User user) throws IOException {
-        messageFromDb.setAuthor(user);
         BeanUtils.copyProperties(message, messageFromDb, "id");
         fillMeta(messageFromDb);
+        messageFromDb.setAuthor(user);
         Message updateMessage = messageRepo.save(messageFromDb);
         wsSender.accept(EventType.UPDATE, updateMessage);
         return updateMessage;
