@@ -39,20 +39,36 @@ export default new Vuex.Store({
                 ]
             }
         },
-        addCommentMutation(state, comment) {
-            const updateIndex = state.messages.findIndex(item => item.id === comment.message.id)
+        addCommentMutation(state, res) {
+            const updateIndex = state.messages.findIndex(item => item.id === res.comment.message.id)
             const message = state.messages[updateIndex]
-            state.messages = [
-                ...state.messages.slice(0, updateIndex),
-                {
-                    ...message,
-                    comments: [
-                        ...message.comments,
-                        comment
+            if(message.comments === null){
+                state.messages = [
+                    ...state.messages.slice(0, updateIndex),
+                    {
+                        ...message,
+                        comments: [
+                            res.data
+                        ]
+                    },
+                    ...state.messages.slice(updateIndex + 1)
                     ]
-                },
-                ...state.messages.slice(updateIndex + 1)
-            ]
+            }
+            else{
+                if (!message.comments.find(it => it.id === res.data.id)) {
+                    state.messages = [
+                        ...state.messages.slice(0, updateIndex),
+                        {
+                            ...message,
+                            comments: [
+                                ...message.comments,
+                                res.data
+                            ]
+                        },
+                        ...state.messages.slice(updateIndex + 1)
+                    ]
+                }
+            }
         },
     },
     actions: {
@@ -82,7 +98,7 @@ export default new Vuex.Store({
         async addCommentAction({commit, state}, comment) {
             const response = await commentApi.add(comment)
             const data = await response.json()
-            commit('addCommentMutation', data)
+            commit('addCommentMutation', {data, comment})
         }
     }
 })

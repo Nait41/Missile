@@ -24,12 +24,13 @@ export default {
   methods: {
     ...mapActions(['addCommentAction']),
     async save() {
-      await this.addCommentAction({
+      const comment = {
         text: this.text,
         message: {
           id: this.messageId
         }
-      })
+      }
+      await this.addCommentAction(comment)
       this.text = ''
     }
   }
