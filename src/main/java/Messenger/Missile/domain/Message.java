@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
+import org.springframework.context.annotation.Lazy;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -36,11 +38,11 @@ public class Message {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonView(Views.FullMessage.class)
+    @JsonView(Views.IdName.class)
     private User author;
 
     @OneToMany(mappedBy = "message", orphanRemoval = true)
-    @JsonView(Views.FullMessage.class)
+    @JsonView(Views.IdName.class)
     private List<Comment> comments;
 
     @JsonView(Views.FullMessage.class)

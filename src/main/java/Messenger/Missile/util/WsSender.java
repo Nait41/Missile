@@ -17,22 +17,29 @@ public class WsSender {
     private final SimpMessagingTemplate template;
     private final ObjectMapper mapper;
 
-    public WsSender(SimpMessagingTemplate template, ObjectMapper objectMapper) {
+    public WsSender(SimpMessagingTemplate template, ObjectMapper mapper) {
         this.template = template;
-        this.mapper = objectMapper;
+        this.mapper = mapper;
     }
-    public <T> BiConsumer<EventType, T> getSender(ObjectType objectType, Class view){
+
+    public <T> BiConsumer<EventType, T> getSender(ObjectType objectType, Class view) {
         ObjectWriter writer = mapper
                 .setConfig(mapper.getSerializationConfig())
                 .writerWithView(view);
+
         return (EventType eventType, T payload) -> {
             String value = null;
+
             try {
                 value = writer.writeValueAsString(payload);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-            template.convertAndSend("/topic/activity", new WsEventDto(objectType, eventType, value));
+
+            template.convertAndSend(
+                    "/topic/activity",
+                    new WsEventDto(objectType, eventType, value)
+            );
         };
     }
 }

@@ -29,15 +29,15 @@ export default {
   },
   methods: {
     ...mapActions(['addMessageAction', 'updateMessageAction']),
-    save() {
+    async save() {
       const message = {
         id: this.id,
         text: this.text
       }
       if (this.id) {
-        this.updateMessageAction(message)
+        await this.updateMessageAction(message)
       } else {
-        this.addMessageAction(message)
+        await this.addMessageAction(message)
       }
       this.text = ''
       this.id = null

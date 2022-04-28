@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
+import org.springframework.context.annotation.Lazy;
 
 import javax.persistence.*;
 
@@ -26,7 +28,7 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(name = "message_id")
-    @JsonView(Views.FullComment.class)
+    @JsonView(Views.IdName.class)
     private Message message;
 
     @ManyToOne
